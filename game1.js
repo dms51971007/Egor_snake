@@ -1,32 +1,42 @@
 var snake;
 var width = 15;
-var mX = 30;
-var mY = 30;
+var mX = 40;
+var mY = 20;
 
 var prizeX, prizeY;
 var nextMove = [0, 1];
 var ctx;
 var canvas;
+var textStatusGame;
 var gameOver = true;
 
 init();
 
 function init() {
-    snake = new Array;
-    var pos = [5, 9];
-    snake.push(pos);
     canvas = document.getElementById('canvas');
-    canvas.width = width * mX;
-    canvas.height = width * mY;
+    textStatusGame = document.getElementById('statusGame');
+    canvas.width = width * (mX + 1) + 1;
+    canvas.height = width * (mY + 1) + 1;
 
     ctx = canvas.getContext('2d');
 
-    draw_field();
     let timerId = setInterval(() => makeMove(), 200);
-
     document.addEventListener('keydown', logKey);
+    newGame();
+}
+
+function newGame() {
+
+    snake = new Array;
+    var pos = [5, 9];
+    snake.push(pos);
+    draw_field();
+    set_priz();
+    drawStatus();
+
 
 }
+
 
 function logKey(e) {
     let code = e.keyCode;
@@ -46,8 +56,10 @@ function logKey(e) {
                 break; //Down key
         }
     } else {
-        console.log(code);
-        if (code == 32) gameOver = false;
+        if (code == 32) {
+            gameOver = false;
+            newGame();
+        }
     }
 }
 
@@ -63,18 +75,34 @@ function makeMove() {
 
         snake.push([x, y]);
         draw_snake();
-        if (prizeX == x && prizeY == y)
+        drawPrise();
+        if (prizeX == x && prizeY == y) {
             set_priz();
-        else
+            drawStatus();
+        } else
             snake.shift();
-
-        for (let i = 0; i < snake.length - 1; i++) {
-            if (snake[i][0] == x && snake[i][1] == y)
-                gameOver = true;
-        };
+        if (isPosOnSnake(x, y)) {
+            gameOver = true;
+            drawStatus();
+        }
+        //        for (let i = 0; i < snake.length - 1; i++) {
+        //            if (snake[i][0] == x && snake[i][1] == y) {
+        //                gameOver = true;
+        //                drawStatus();
+        //            }
+        //        };   
     }
 
 }
+
+function drawStatus() {
+    if (gameOver) {
+        textStatusGame.textContent = "Нажмите пробел для начала, счет: " + snake.length;
+    } else {
+        textStatusGame.textContent = "Cчет: " + snake.length;
+    }
+}
+
 
 function draw_segment(ctx, x, y, color) {
     ctx.beginPath();
@@ -87,6 +115,16 @@ function draw_rect(x, y, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x * width + 1, y * width + 1, width - 2, width - 2);
 }
+
+function isPosOnSnake(x, y) {
+    for (let i = 0; i < snake.length - 1; i++) {
+        if (snake[i][0] == x && snake[i][1] == y) {
+            return true;
+        }
+    };
+    return false;
+}
+
 
 function draw_snake() {
     for (let pr in snake) {
@@ -105,13 +143,20 @@ function getRandomInt(max) {
 function set_priz() {
     prizeX = getRandomInt(mX);
     prizeY = getRandomInt(mY);
-    draw_rect(prizeX, prizeY, "#f0db4f");
+    
+    prizeX = snake[0][0];
+    prizeY = snake[0][1];
 
+}
+
+function drawPrise() {
+    draw_rect(prizeX, prizeY, "#f0db4f");
 }
 
 
 function draw_field() {
-   for (var i = 0; i <= mY + 1; i++) {
+    ctx.clearRect(0, 0, width * (mX + 5), width * (mY + 5));
+    for (var i = 0; i <= mY + 1; i++) {
         ctx.moveTo(0, i * width);
         ctx.lineTo(width * (mX + 1), i * width);
 
@@ -122,6 +167,5 @@ function draw_field() {
         ctx.lineTo(width * i, (1 + mY) * width);
 
     }
-    set_priz();
     ctx.stroke();
 }
