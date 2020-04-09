@@ -3,11 +3,12 @@ var GameSnake = (function () {
     var snake;
     var mX = 40;
     var mY = 20;
-
+    
     var prize;
     var nextMove;
+    var prevMove;
     var gameOver = true;
-
+    
 
     var Pos = function (x, y) {
         this.x = x;
@@ -41,6 +42,7 @@ var GameSnake = (function () {
             if (prize.x == x && prize.y == y) {
                 set_priz();
             } else {
+                prevMove = snake[0];
                 snake.shift();
             }
 
@@ -75,17 +77,21 @@ var GameSnake = (function () {
             init();
         },
         makeMove: function () {
-            makeMove();
+            return makeMove();
         },
         isGameOver: function () {
             return gameOver;
         },
         getSnake: function () {
-            return snake
+            return snake;
         },
         getPrize: function () {
-            return prize
+            return prize;
         },
+        getPrevMove: function () {
+            return prevMove;
+        },
+        
         setNextMove: function (x, y) {
             nextMove = new Pos(x, y);
         }
@@ -117,9 +123,10 @@ var UISnake = (function () {
         ctx.stroke();
     }
 
-    function draw_snake(snake) {
+    function draw_snake(snake, prevMove) {
         draw_rect(snake[snake.length - 1].x, snake[snake.length - 1].y, "#ff0000");
-             draw_rect(snake[0].x, snake[0].y, "#ffffff");
+        if (prevMove!==undefined)
+             draw_rect(prevMove.x, prevMove.y, "#ffffff");
     }
 
     function draw_prize(prize) {
@@ -153,10 +160,10 @@ var UISnake = (function () {
         init: function () {
             init();
         },
-        draw: function (snake, prize) {
-            draw_snake(snake);
+        draw: function (snake, prize, prevMove) {
+            draw_snake(snake, prevMove);
             draw_prize(prize);
-            ctx.stroke();
+            //ctx.stroke();
 
 
         }
@@ -174,7 +181,7 @@ var SnakeController = (function (gSnake, UIsnake) {
     function makeMove() {
         if (!gSnake.isGameOver()) {
             gSnake.makeMove();
-            UIsnake.draw(gSnake.getSnake(), gSnake.getPrize());
+            UIsnake.draw(gSnake.getSnake(), gSnake.getPrize(),gSnake.getPrevMove());
         }
     }
 
@@ -198,7 +205,8 @@ var SnakeController = (function (gSnake, UIsnake) {
         } else {
             if (code == 32) {
                 gSnake.init();
-                UIsnake.draw(gSnake.getSnake(), gSnake.getPrize());
+                UIsnake.init();
+                UIsnake.draw(gSnake.getSnake(), gSnake.getPrize(),gSnake.getPrevMove());
             }
         }
     }
