@@ -3,12 +3,12 @@ var GameSnake = (function () {
     var snake;
     var mX = 40;
     var mY = 20;
-    
+
     var prize;
     var nextMove;
     var prevMove;
     var gameOver = true;
-    
+
 
     var Pos = function (x, y) {
         this.x = x;
@@ -18,7 +18,7 @@ var GameSnake = (function () {
     function init() {
 
         snake = new Array;
-        
+
         prize = new Pos(0, 1);
         nextMove = new Pos(0, 1);
         snake.push(new Pos(5, 9));
@@ -73,25 +73,26 @@ var GameSnake = (function () {
     }
 
     return {
-        init: function () {
-            init();
-        },
-        makeMove: function () {
-            return makeMove();
-        },
+        init: init,
+        makeMove: makeMove,
         isGameOver: function () {
             return gameOver;
         },
         getSnake: function () {
             return snake;
         },
+
+        getScore: function () {
+            return snake.length;
+        },
+
         getPrize: function () {
             return prize;
         },
         getPrevMove: function () {
             return prevMove;
         },
-        
+
         setNextMove: function (x, y) {
             nextMove = new Pos(x, y);
         }
@@ -125,8 +126,8 @@ var UISnake = (function () {
 
     function draw_snake(snake, prevMove) {
         draw_rect(snake[snake.length - 1].x, snake[snake.length - 1].y, "#ff0000");
-        if (prevMove!==undefined)
-             draw_rect(prevMove.x, prevMove.y, "#ffffff");
+        if (prevMove !== undefined)
+            draw_rect(prevMove.x, prevMove.y, "#ffffff");
     }
 
     function draw_prize(prize) {
@@ -138,11 +139,11 @@ var UISnake = (function () {
         ctx.fillRect(x * width + 1, y * width + 1, width - 2, width - 2);
     }
 
-    function drawStatus() {
+    function drawStatus(gameOver, score) {
         if (gameOver) {
-            textStatusGame.textContent = "Нажмите пробел для начала, счет: " + snake.length;
+            textStatusGame.textContent = "Нажмите пробел для начала, счет: " + score;
         } else {
-            textStatusGame.textContent = "Cчет: " + snake.length;
+            textStatusGame.textContent = "Cчет: " + score;
         }
     }
 
@@ -153,17 +154,17 @@ var UISnake = (function () {
         canvas.width = width * (mX + 1) + 1;
         canvas.height = width * (mY + 1) + 1;
         ctx = canvas.getContext('2d');
+        drawStatus(true, 0);
+        draw_field();
 
     }
 
     return {
-        init: function () {
-            init();
-        },
-        draw: function (snake, prize, prevMove) {
-            draw_snake(snake, prevMove);
-            draw_prize(prize);
-            //ctx.stroke();
+        init: init,
+        draw: function (gSnake) {
+            draw_snake(gSnake.getSnake(), gSnake.getPrevMove());
+            draw_prize(gSnake.getPrize());
+            drawStatus(gSnake.isGameOver(), gSnake.getScore());
 
 
         }
@@ -181,7 +182,7 @@ var SnakeController = (function (gSnake, UIsnake) {
     function makeMove() {
         if (!gSnake.isGameOver()) {
             gSnake.makeMove();
-            UIsnake.draw(gSnake.getSnake(), gSnake.getPrize(),gSnake.getPrevMove());
+            UIsnake.draw(gSnake);
         }
     }
 
@@ -206,7 +207,7 @@ var SnakeController = (function (gSnake, UIsnake) {
             if (code == 32) {
                 gSnake.init();
                 UIsnake.init();
-                UIsnake.draw(gSnake.getSnake(), gSnake.getPrize(),gSnake.getPrevMove());
+                UIsnake.draw(gSnake);
             }
         }
     }
