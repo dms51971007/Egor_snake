@@ -22,6 +22,9 @@ var direction; // [dx, dy]
 var pendingDirection; // queued direction from input
 var prizeX, prizeY;
 var gameOver = true;
+var score = 0;
+var records = [];
+var scoreEl, bestEl, recordsBodyEl;
 
 // Timing
 var stepMs = 200; // logical update step (ms)
@@ -44,6 +47,14 @@ function init() {
     backgroundCtx = backgroundCanvas.getContext('2d');
     buildBackground();
 
+    // HUD elements
+    scoreEl = document.getElementById('score');
+    bestEl = document.getElementById('bestScore');
+    recordsBodyEl = document.getElementById('recordsBody');
+    loadRecords();
+    updateHud();
+    renderRecordsTable();
+
     resetGame();
 
     document.addEventListener('keydown', onKeyDown, { passive: false });
@@ -61,6 +72,8 @@ function resetGame() {
     placePrizeNotOnSnake();
     gameOver = false;
     accumulatorMs = 0;
+    score = 0;
+    updateHud();
 }
 
 function frame(nowMs) {
@@ -99,7 +112,7 @@ function update() {
     // Self collision check
     for (var i = 0; i < snake.length; i++) {
         if (snake[i][0] === nextX && snake[i][1] === nextY) {
-            gameOver = true;
+            endGame();
             return;
         }
     }
@@ -108,6 +121,8 @@ function update() {
     snake.push([nextX, nextY]);
     var atePrize = (prizeX === nextX && prizeY === nextY);
     if (atePrize) {
+        score += 1;
+        updateHud();
         placePrizeNotOnSnake();
     } else {
         snake.shift();
@@ -225,4 +240,78 @@ function placePrizeNotOnSnake() {
         tries++;
         if (tries > 10000) break; // safety
     } while (occupied.has(prizeX + "," + prizeY));
+}
+
+function endGame() {
+    if (gameOver) return;
+    gameOver = true;
+    if (score > 0) {
+        records.push({ score: score, ts: Date.now() });
+        // Sort by score desc, then older first for ties
+        records.sort(function(a, b) {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.ts - b.ts;
+        });
+        // Keep top 5
+        if (records.length > 5) records = records.slice(0, 5);
+        saveRecords();
+        updateHud();
+        renderRecordsTable();
+    }
+}
+
+function loadRecords() {
+    try {
+        var raw = localStorage.getItem('snake_records');
+        if (raw) records = JSON.parse(raw) || [];
+        else records = [];
+    } catch (e) {
+        records = [];
+    }
+}
+
+function saveRecords() {
+    try {
+        localStorage.setItem('snake_records', JSON.stringify(records));
+    } catch (e) {
+        // ignore
+    }
+}
+
+function getBestScore() {
+    var best = 0;
+    for (var i = 0; i < records.length; i++) {
+        if (records[i].score > best) best = records[i].score;
+    }
+    if (score > best) best = score;
+    return best;
+}
+
+function updateHud() {
+    if (scoreEl) scoreEl.textContent = String(score);
+    if (bestEl) bestEl.textContent = String(getBestScore());
+}
+
+function renderRecordsTable() {
+    if (!recordsBodyEl) return;
+    // clear
+    while (recordsBodyEl.firstChild) recordsBodyEl.removeChild(recordsBodyEl.firstChild);
+    for (var i = 0; i < Math.min(records.length, 5); i++) {
+        var rec = records[i];
+        var tr = document.createElement('tr');
+        var rankTd = document.createElement('td');
+        rankTd.textContent = String(i + 1);
+        var scoreTd = document.createElement('td');
+        scoreTd.textContent = String(rec.score);
+        var dateTd = document.createElement('td');
+        try {
+            dateTd.textContent = new Date(rec.ts).toLocaleString();
+        } catch (e) {
+            dateTd.textContent = String(rec.ts);
+        }
+        tr.appendChild(rankTd);
+        tr.appendChild(scoreTd);
+        tr.appendChild(dateTd);
+        recordsBodyEl.appendChild(tr);
+    }
 }

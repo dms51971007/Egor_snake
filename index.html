@@ -6,6 +6,16 @@
 </head>
 
 <body>
+    <div id="hud">
+        <div>Score: <span id="score">0</span></div>
+        <div>Best: <span id="bestScore">0</span></div>
+    </div>
+    <table id="records" border="1" cellspacing="0" cellpadding="4">
+        <thead>
+            <tr><th>#</th><th>Score</th><th>Date</th></tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+    </table>
     <canvas id="canvas"></canvas>
     <script src="game1.js"></script>
 </body>
